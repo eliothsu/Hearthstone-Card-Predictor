@@ -10,6 +10,8 @@ class Dataset:
     id_to_name_dict = {}
     final_data = {}
     paired_data = {}
+    played_cards = []
+    total_counts = {}
 
     def __init__(self, file):
         self.games = self.init_process_file(file)
@@ -82,10 +84,26 @@ class Dataset:
     def init_id_to_name(self):
         id_to_name = {}
         for card in self.all_cards:
-            if 'id' in card and 'name' in card:
+            if 'id' in card and 'name' in card and card['name'] not in id_to_name:
                 id_to_name[card['id']] = card['name']
                 id_to_name[card['name']] = card['id']
         return id_to_name
 
     def id_to_name(self, str):
         return self.id_to_name_dict[str]
+
+    def add_card(self, name):
+        self.played_cards.append(name)
+        # print(self.paired_data[self.id_to_name(name)])
+        for card_id, count in self.paired_data[self.id_to_name(name)].items():
+            if card_id not in self.total_counts:
+                self.total_counts[card_id] = 0
+            self.total_counts[card_id] += count
+
+    def get_probabilities(self):
+        size = len(self.total_counts)
+        maximum = max(self.total_counts.values())
+        # print(self.total_counts)
+        counter = Counter({self.id_to_name(card_id): '%.3f'%(count / maximum) for (card_id, count) in self.total_counts.items() if card_id in self.id_to_name_dict})
+        # {(self.id_to_name(card_id), count) for (card_id, count) in self.total_counts.items() if card_id in self.id_to_name_dict}
+        return counter.most_common(30)
